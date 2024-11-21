@@ -1,0 +1,25 @@
+[package]
+name = "auto-api"
+version = "0.1.0"
+edition = "2021"
+default-run = "auto-api"
+
+[[bin]]
+name = "auto-api"
+path = "src/bin/auto-api.rs"
+
+[[bin]]
+name = "export"
+path = "src/bin/export.rs"
+
+[dependencies]
+axum = { version = "0.7.9", features = ["macros"] }
+garde = { version = "0.20.0", features = ["full", "pattern"] }
+indexmap = { version = "2.6.0", features = ["serde"] }
+regex = "1.11.1"
+regex_static = "0.1.1"
+schemars = "1.0.0-alpha.15"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = { version = "1.0.133", features = ["preserve_order"] }
+tokio = { version = "1.41.1", features = ["full"] }
+ts-rs = "10.0.0"
