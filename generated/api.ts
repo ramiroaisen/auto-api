@@ -19,7 +19,7 @@ export type Endpoint<
   $output?: Output
 };
 
-export type ErrorPayload = { error: { status: number, message: string, } & ({ "kind": "INTERNAL" } | { "kind": "RESOURCE_NOT_FOUND" } | { "kind": "RECORD_NOT_FOUND" } | { "kind": "INVALID_PARAMS_PARSE" } | { "kind": "INVALID_PARAMS_VALIDATE" } | { "kind": "INVALID_QUERY_PARSE" } | { "kind": "INVALID_QUERY_VALIDATE" } | { "kind": "INVALID_PAYLOAD_PARSE" } | { "kind": "INVALID_PAYLOAD_VALIDATE" }), }
+export type ErrorPayload = { error: { status: number, message: string, } & ({ "kind": "INTERNAL" } | { "kind": "RESOURCE_NOT_FOUND" } | { "kind": "RECORD_NOT_FOUND" } | { "kind": "INVALID_PARAMS_PARSE" } | { "kind": "INVALID_PARAMS_VALIDATE" } | { "kind": "INVALID_QUERY_PARSE" } | { "kind": "INVALID_QUERY_VALIDATE" } | { "kind": "PAYLOAD_READ" } | { "kind": "PAYLOAD_CONTENT_TYPE" } | { "kind": "INVALID_PAYLOAD_PARSE" } | { "kind": "INVALID_PAYLOAD_VALIDATE" }), }
 
 export type Api = {
   "/users": {

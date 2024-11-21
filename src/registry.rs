@@ -1,12 +1,13 @@
 use core::panic;
 use std::{convert::Infallible, sync::Arc};
+use axum::response::IntoResponse;
 use axum::routing::MethodRouter;
 use axum::{async_trait, extract::Request, http::Method, response::Response, routing::MethodFilter};
 use indexmap::IndexMap;
 use schemars::{generate::SchemaSettings, Schema as SchemarsSchema};
 use serde_json::json;
 
-use crate::response::to_response;
+use crate::response::into_json_response;
 use crate::ts;
 use crate::endpoint::Endpoint;
 use crate::schema::Schema;
@@ -35,7 +36,10 @@ impl<
 > RegistryHandler for RegistryHandlerItem<T> {
 
   async fn handle(&self, req: Request) -> Response {
-    to_response(self.0.handle(req).await)
+    match self.0.handle(req).await {
+      Ok(out) => into_json_response(out),
+      Err(err) => err.into_response(),
+    }
   }
 }
 

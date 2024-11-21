@@ -3,13 +3,8 @@ use serde::Serialize;
 
 use crate::error::{ApiError, ApiErrorKind};
 
-pub fn to_response<T: Serialize, E: IntoResponse>(result: Result<T, E>) -> Response {
-  let out = match result {
-    Ok(out) => out,
-    Err(err) => return err.into_response(),
-  };
-
-  let body = match serde_json::to_vec(&out) {
+pub fn into_json_response<T: Serialize>(v: T) -> Response {
+  let body = match serde_json::to_vec(&v) {
     Ok(body) => body,
     Err(_err) => {
       return ApiError {

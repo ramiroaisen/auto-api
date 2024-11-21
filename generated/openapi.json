@@ -329,6 +329,30 @@
                 "properties": {
                   "kind": {
                     "type": "string",
+                    "const": "PAYLOAD_READ"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "PAYLOAD_CONTENT_TYPE"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
                     "const": "INVALID_PAYLOAD_PARSE"
                   }
                 },
