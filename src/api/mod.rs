@@ -7,13 +7,20 @@ pub fn registry() -> Registry {
   let mut registry = Registry::new::<ApiErrorPayload>();
   
   macro_rules! r {
-    ($item:path) => {
+    ($item:expr) => {
       registry.register($item);
+    };
+
+    ($item:expr, $($rest:expr,)*) => {
+      r!($item);
+      r!($($rest),*);
     };
   }
 
-  r!(users::list::E);
-  r!(users::get::E);
+  r!(
+    users::list::E,
+    users::get::E,
+  );
   
   registry
 }
