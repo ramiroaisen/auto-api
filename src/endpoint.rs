@@ -60,128 +60,130 @@ pub trait Endpoint: Send + Sync + 'static {
       }
     };
 
-    let params = if Self::Params::is_void() {
-      Self::Params::void()
-    } else { 
-      let params = match Path::<Self::Params>::from_request_parts(&mut parts, &()).await {
-        Ok(Path(params)) => params,
-        Err(err) => {
-          return Err(ApiError {
-            status: StatusCode::BAD_REQUEST.as_u16(),
-            kind: ApiErrorKind::InvalidParamsParse,
-            message: format!("error parsing path parameters: {err}"),
-          })
-        }
-      };
+    let params = match Self::Params::void() {
+      Some(void) => void,
+      None => {
+        let params = match Path::<Self::Params>::from_request_parts(&mut parts, &()).await {
+          Ok(Path(params)) => params,
+          Err(err) => {
+            return Err(ApiError {
+              status: StatusCode::BAD_REQUEST.as_u16(),
+              kind: ApiErrorKind::InvalidParamsParse,
+              message: format!("error parsing path parameters: {err}"),
+            })
+          }
+        };
 
-      match params.validate() {
-        Ok(()) => {},
-        Err(report) => {
-          return Err(ApiError {
-            status: StatusCode::BAD_REQUEST.as_u16(),
-            kind: ApiErrorKind::InvalidParamsValidate,
-            message: format!("error validating path parameters: {report}"),
-          })
+        match params.validate() {
+          Ok(()) => {},
+          Err(report) => {
+            return Err(ApiError {
+              status: StatusCode::BAD_REQUEST.as_u16(),
+              kind: ApiErrorKind::InvalidParamsValidate,
+              message: format!("error validating path parameters: {report}"),
+            })
+          }
         }
+
+        params
       }
-
-      params
     };
     
 
-    let query = if Self::Query::is_void() {
-      Self::Query::void()
-    } else {
-      // axum extractor
-      // use axum::extract::Query;
-      // let query = match Query::<Self::Query>::from_request_parts(&mut parts, &()).await {
-      //   Ok(Query(query)) => query,
-      //   Err(err) => {
-      //     return ApiError {
-      //       status: StatusCode::BAD_REQUEST.as_u16(),
-      //       kind: ApiErrorKind::InvalidQueryParse,
-      //       message: format!("error parsing query parameters: {err}"),
-      //     }.into_response()
-      //   }
-      // };
+    let query = match Self::Query::void() {
+      Some(void) => void,
+      None => {
+        // axum extractor
+        // use axum::extract::Query;
+        // let query = match Query::<Self::Query>::from_request_parts(&mut parts, &()).await {
+        //   Ok(Query(query)) => query,
+        //   Err(err) => {
+        //     return ApiError {
+        //       status: StatusCode::BAD_REQUEST.as_u16(),
+        //       kind: ApiErrorKind::InvalidQueryParse,
+        //       message: format!("error parsing query parameters: {err}"),
+        //     }.into_response()
+        //   }
+        // };
 
-      // serde_qs
-      let query = match serde_qs::from_str::<Self::Query>(parts.uri.query().unwrap_or("")) {
-        Ok(query) => query,
-        Err(err) => {
-          return Err(ApiError {
-            status: StatusCode::BAD_REQUEST.as_u16(),
-            kind: ApiErrorKind::InvalidQueryParse,
-            message: format!("error parsing query parameters: {err}"),
-          })
-        }
-      };
+        // serde_qs
+        let query = match serde_qs::from_str::<Self::Query>(parts.uri.query().unwrap_or("")) {
+          Ok(query) => query,
+          Err(err) => {
+            return Err(ApiError {
+              status: StatusCode::BAD_REQUEST.as_u16(),
+              kind: ApiErrorKind::InvalidQueryParse,
+              message: format!("error parsing query parameters: {err}"),
+            })
+          }
+        };
 
-      match query.validate() {
-        Ok(()) => {},
-        Err(report) => {
-          return Err(ApiError {
-            status: StatusCode::BAD_REQUEST.as_u16(),
-            kind: ApiErrorKind::InvalidQueryValidate,
-            message: format!("error validating query parameters: {report}"),
-          })
+        match query.validate() {
+          Ok(()) => {},
+          Err(report) => {
+            return Err(ApiError {
+              status: StatusCode::BAD_REQUEST.as_u16(),
+              kind: ApiErrorKind::InvalidQueryValidate,
+              message: format!("error validating query parameters: {report}"),
+            })
+          }
         }
+
+        query
       }
-
-      query
     };
 
-    let payload = if Self::Payload::is_void() {
-      Self::Payload::void()
-    } else {
+    let payload = match Self::Payload::void() { 
+      Some(void) => void,
+      None => {
+        // // axum
+        // let req = Request::from_parts(parts, body);
 
-      // // axum
-      // let req = Request::from_parts(parts, body);
+        // let payload = match Json::<Self::Payload>::from_request(req, &()).await {
+        //   Ok(Json(payload)) => payload,
+        //   Err(err) => {
+        //     return ApiError {
+        //       status: StatusCode::BAD_REQUEST.as_u16(),
+        //       kind: ApiErrorKind::InvalidPayloadParse,
+        //       message: format!("error parsing payload: {err}"),
+        //     }.into_response()
+        //   }
+        // };
 
-      // let payload = match Json::<Self::Payload>::from_request(req, &()).await {
-      //   Ok(Json(payload)) => payload,
-      //   Err(err) => {
-      //     return ApiError {
-      //       status: StatusCode::BAD_REQUEST.as_u16(),
-      //       kind: ApiErrorKind::InvalidPayloadParse,
-      //       message: format!("error parsing payload: {err}"),
-      //     }.into_response()
-      //   }
-      // };
-
-      if !is_content_type_json(&parts) {
-        return Err(ApiError {
-          status: StatusCode::BAD_REQUEST.as_u16(),
-          kind: ApiErrorKind::PayloadContentType,
-          message: String::from("content-type of request must be application/json"),
-        })
-      }
-
-      let buf = read_body(self.max_payload_size(), body).await?;
-
-      let payload = match serde_json::from_slice::<Self::Payload>(&buf) {
-        Ok(payload) => payload,
-        Err(err) => {
+        if !is_content_type_json(&parts) {
           return Err(ApiError {
             status: StatusCode::BAD_REQUEST.as_u16(),
-            kind: ApiErrorKind::InvalidPayloadParse,
-            message: format!("error parsing payload: {err}"),
+            kind: ApiErrorKind::PayloadContentType,
+            message: String::from("content-type of request must be application/json"),
           })
         }
-      };
 
-      match payload.validate() {
-        Ok(()) => {},
-        Err(report) => {
-          return Err(ApiError {
-            status: StatusCode::BAD_REQUEST.as_u16(),
-            kind: ApiErrorKind::InvalidPayloadValidate,
-            message: format!("error validating payload: {report}"),
-          })
+        let buf = read_body(self.max_payload_size(), body).await?;
+
+        let payload = match serde_json::from_slice::<Self::Payload>(&buf) {
+          Ok(payload) => payload,
+          Err(err) => {
+            return Err(ApiError {
+              status: StatusCode::BAD_REQUEST.as_u16(),
+              kind: ApiErrorKind::InvalidPayloadParse,
+              message: format!("error parsing payload: {err}"),
+            })
+          }
+        };
+
+        match payload.validate() {
+          Ok(()) => {},
+          Err(report) => {
+            return Err(ApiError {
+              status: StatusCode::BAD_REQUEST.as_u16(),
+              kind: ApiErrorKind::InvalidPayloadValidate,
+              message: format!("error validating payload: {report}"),
+            })
+          }
         }
+        
+        payload
       }
-      
-      payload
     };
     
     let parsed = ParsedRequest {
