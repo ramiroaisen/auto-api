@@ -59,8 +59,8 @@ pub trait Endpoint: Send + Sync + 'static {
       }
     };
 
-    let params = if Self::Params::is_empty() {
-      Self::Params::empty()
+    let params = if Self::Params::is_void() {
+      Self::Params::void()
     } else { 
       let params = match Path::<Self::Params>::from_request_parts(&mut parts, &()).await {
         Ok(Path(params)) => params,
@@ -88,8 +88,8 @@ pub trait Endpoint: Send + Sync + 'static {
     };
     
 
-    let query = if Self::Query::is_empty() {
-      Self::Query::empty()
+    let query = if Self::Query::is_void() {
+      Self::Query::void()
     } else {
       // axum extractor
       // use axum::extract::Query;
@@ -130,8 +130,8 @@ pub trait Endpoint: Send + Sync + 'static {
       query
     };
 
-    let payload = if Self::Payload::is_empty() {
-      Self::Payload::empty()
+    let payload = if Self::Payload::is_void() {
+      Self::Payload::void()
     } else {
 
       // // axum

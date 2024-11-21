@@ -114,7 +114,7 @@ impl Registry {
 
       indexmap::map::Entry::Vacant(entry) => {
         
-        let params = if Params::is_empty() {
+        let params = if Params::is_void() {
           None
         } else {
           let mut params_settings = SchemaSettings::openapi3()
@@ -126,7 +126,7 @@ impl Registry {
           Some(Params::json_schema(&mut params_settings.into_generator()))
         };
 
-        let query = if Query::is_empty() {
+        let query = if Query::is_void() {
           None
         } else {
           // query
@@ -139,7 +139,7 @@ impl Registry {
           Some(Query::json_schema(&mut query_settings.into_generator()))
         };
 
-        let payload = if Payload::is_empty() {
+        let payload = if Payload::is_void() {
           None
         } else {
           // payload
@@ -161,19 +161,19 @@ impl Registry {
         
         let output = Output::json_schema(&mut output_settings.into_generator());
 
-        let ts_params = if Params::is_empty() {
+        let ts_params = if Params::is_void() {
           None
         } else {
           Some(ts::inline::<Params>())
         };
 
-        let ts_query = if Query::is_empty() {
+        let ts_query = if Query::is_void() {
           None
         } else {
           Some(ts::inline::<Query>())
         };
 
-        let ts_payload = if Payload::is_empty() {
+        let ts_payload = if Payload::is_void() {
           None
         } else {
           Some(ts::inline::<Payload>()) 
