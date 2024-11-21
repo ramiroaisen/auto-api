@@ -3,20 +3,23 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+pub const DEFAULT_LIMIT: u64 = 200;
+pub const DEFAULT_SKIP: u64 = 0;
+
 #[derive(Serialize, Deserialize, JsonSchema, TS)]
 pub struct Page<T> {
   #[garde(range(min = 0))]
-  pub skip: usize,
+  pub skip: u64,
   #[garde(range(min = 1))]
-  pub limit: usize,
+  pub limit: u64,
   #[garde(range(min = 0))]
-  pub total: usize,
+  pub total: u64,
   #[garde(dive)]
   pub items: Vec<T>,
 }
 
-impl<T: Validate<Context = ()>> Validate for Page<T> {
-  type Context = ();
+impl<T: Validate> Validate for Page<T> {
+  type Context = T::Context;
 
   fn validate_into(
     &self,
@@ -24,7 +27,7 @@ impl<T: Validate<Context = ()>> Validate for Page<T> {
     parent: &mut dyn FnMut() -> Path,
     report: &mut Report,
   ) {
-    PageValidate {
+    ValidatePage {
       skip: self.skip,
       limit: self.limit,
       total: self.total,
@@ -34,37 +37,39 @@ impl<T: Validate<Context = ()>> Validate for Page<T> {
   }
 }
 
-// temporary struct to do Page<T> validation with garde
+/// temporary struct to do Page<T> validation with garde \
+/// TODO: remove this when garde supports generics
 #[derive(Validate)]
-struct PageValidate<'a, T: Validate<Context = ()>> {
+#[garde(context(T::Context))]
+struct ValidatePage<'a, T: Validate> {
   #[garde(range(min = 0))]
-  skip: usize,
+  skip: u64,
   #[garde(range(min = 1))]
-  limit: usize,
+  limit: u64,
   #[garde(range(min = 0))]
-  total: usize,
+  total: u64,
   #[garde(dive)]
   items: &'a Vec<T>,
 }
 
-fn default_limit() -> usize {
-  200
+const fn default_limit() -> u64 {
+  DEFAULT_LIMIT
 }
 
-fn default_skip() -> usize {
-  0
+const fn default_skip() -> u64 {
+  DEFAULT_SKIP
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
 pub struct Limit(
   #[garde(range(min = 1, max = 200))]
-  #[schemars(default = "default_limit")]
-  pub usize
+  #[schemars(default = "default_limit", example = "default_limit")]
+  pub u64
 );
 
 impl Default for Limit {
   fn default() -> Self {
-    Self(default_limit())
+    Self(DEFAULT_LIMIT)
   }
 }
 
@@ -72,13 +77,13 @@ impl Default for Limit {
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
 pub struct Skip (
   #[garde(range(min = 0))]
-  #[schemars(default = "default_skip")]
-  pub usize
+  #[schemars(default = "default_skip", example = "default_skip")]
+  pub u64
 );
 
 impl Default for Skip {
   fn default() -> Self {
-    Self(default_skip())
+    Self(DEFAULT_SKIP)
   }
 }
 
