@@ -1,5 +1,6 @@
 use core::panic;
 use std::{convert::Infallible, sync::Arc};
+use axum::routing::MethodRouter;
 use axum::{async_trait, extract::Request, http::Method, response::Response, routing::MethodFilter};
 use indexmap::IndexMap;
 use schemars::{generate::SchemaSettings, Schema as SchemarsSchema};
@@ -384,8 +385,8 @@ export type Endpoint<
 
     let servers = json!([
       {
-        "url": "https://api.example.test/v1",
-        "description": "Production server",
+        "url": "/",
+        "description": "This server",
       },
 
       // {
@@ -425,7 +426,7 @@ export type Endpoint<
   pub fn axum_router(&self) -> axum::Router {
     let mut router = axum::Router::<()>::new();
     for (path, methods_map) in &self.map {
-      let mut method_router = axum::routing::method_routing::MethodRouter::<(), Infallible>::new();
+      let mut method_router = MethodRouter::<(), Infallible>::new();
       for (method, item) in methods_map {
         let method_filter = match method  {
           &Method::HEAD => MethodFilter::HEAD,

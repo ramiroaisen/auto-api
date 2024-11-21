@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::util::validate_vec;
+use crate::util::dive_vec;
 
 #[derive(Serialize, Deserialize, JsonSchema, TS)]
 pub struct Page<T> {
@@ -13,7 +13,7 @@ pub struct Page<T> {
   pub limit: usize,
   #[garde(range(min = 0))]
   pub total: usize,
-  #[garde(custom(validate_vec))]
+  #[garde(custom(dive_vec))]
   pub items: Vec<T>,
 }
 
@@ -45,6 +45,43 @@ struct PageValidate<'a, T: Validate<Context = ()>> {
   limit: usize,
   #[garde(range(min = 0))]
   total: usize,
-  #[garde(custom(validate_vec))]
+  #[garde(custom(dive_vec))]
   items: &'a Vec<T>,
 }
+
+fn default_limit() -> usize {
+  200
+}
+
+fn default_skip() -> usize {
+  0
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
+pub struct Limit(
+  #[garde(range(min = 1, max = 200))]
+  #[schemars(default = "default_limit")]
+  pub usize
+);
+
+impl Default for Limit {
+  fn default() -> Self {
+    Self(default_limit())
+  }
+}
+
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
+pub struct Skip (
+  #[garde(range(min = 0))]
+  #[schemars(default = "default_skip")]
+  pub usize
+);
+
+impl Default for Skip {
+  fn default() -> Self {
+    Self(default_skip())
+  }
+}
+
+

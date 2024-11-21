@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use ts_rs::{TypeVisitor, TS};
 
 pub fn inline<T: TS + 'static + ?Sized>() -> String {
-  let mut generics = GenericsVisitor { decl: Default::default() };
-  let mut dependencies = GenericsVisitor { decl: Default::default() };
+  let mut generics = Visitor { map: Default::default() };
+  let mut dependencies = Visitor { map: Default::default() };
   T::visit_generics(&mut generics);
   T::visit_dependencies(&mut dependencies);
 
@@ -12,7 +12,7 @@ pub fn inline<T: TS + 'static + ?Sized>() -> String {
 
   macro_rules! replace {
     ($types:expr) => {{
-      for (name, inline) in $types.decl.iter() {
+      for (name, inline) in $types.map.iter() {
         // TODO: improve this
         if(name == "Array") {
           continue;
@@ -41,13 +41,13 @@ pub fn inline<T: TS + 'static + ?Sized>() -> String {
   target
 }
 
-pub struct GenericsVisitor {
-  pub decl: HashMap<String, String>,
+pub struct Visitor {
+  pub map: HashMap<String, String>,
 }
 
-impl TypeVisitor for GenericsVisitor {
+impl TypeVisitor for Visitor {
   fn visit<T: TS + 'static + ?Sized>(&mut self) {
     let name = T::name().split("<").next().unwrap().to_string();
-    self.decl.insert(name, inline::<T>());
+    self.map.insert(name, inline::<T>());
   }
 }
