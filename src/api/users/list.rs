@@ -6,7 +6,7 @@ use ts_rs::TS;
 use std::borrow::Cow;
 use crate::{api::shared::{Limit, Skip}, endpoint::{Endpoint, EndpointError, ParsedRequest}};
 
-use super::Item;
+use super::User;
 use crate::api::shared::Page;
 
 pub struct E;
@@ -24,7 +24,7 @@ impl Endpoint for E {
   type Params = ();
   type Query = Query;
   type Payload = ();
-  type Output = Page<Item>;
+  type Output = Page<User>;
   type Ctx = ();
 
   fn path(&self) -> Cow<'static, str> {
@@ -50,7 +50,7 @@ impl Endpoint for E {
     let Skip(skip) = query.skip.unwrap_or_default();
     let Limit(limit) = query.limit.unwrap_or_default();
 
-    Ok(Page::<Item> {
+    Ok(Page::<User> {
       skip,
       limit,
       total: 0,

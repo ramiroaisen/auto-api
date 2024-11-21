@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use super::Item;
+use super::User;
 
 pub struct E;
 
@@ -23,7 +23,7 @@ impl Endpoint for E {
   type Params = Params;
   type Query = ();
   type Payload = ();
-  type Output = Item;
+  type Output = User;
 
   fn path(&self) -> Cow<'static, str> {
     "/users/:id".into()
@@ -44,7 +44,7 @@ impl Endpoint for E {
     &self,
     ParsedRequest { .. }: ParsedRequest<Self::Ctx, Self::Params, Self::Query, Self::Payload>,
   ) -> Result<Self::Output, Box<dyn EndpointError>> {
-    Ok(Item {
+    Ok(User {
       id: "123".to_string(),
       email: "test@test.com".to_string(),
     })

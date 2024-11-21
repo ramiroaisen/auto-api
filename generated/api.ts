@@ -23,9 +23,25 @@ export type ErrorPayload = { error: { status: number, message: string, } & ({ "k
 
 export type Api = {
   "/users": {
-    "GET": Endpoint<"GET", "/users", Empty, Empty, Empty, { skip: number, limit: number, total: number, items: Array<{ id: string, email: string, }>, }>
+    "GET": Endpoint<"GET", "/users", Empty, { skip: bigint | null, limit: bigint | null, }, Empty, { skip: bigint, limit: bigint, total: bigint, items: Array<{ 
+/**
+ * The unique id of the user
+ */
+id: string, 
+/**
+ * The email address of the user
+ */
+email: string, }>, }>
   }
   "/users/:id": {
-    "GET": Endpoint<"GET", "/users/:id", { id: string, }, Empty, Empty, { id: string, email: string, }>
+    "GET": Endpoint<"GET", "/users/:id", { id: string, }, Empty, Empty, { 
+/**
+ * The unique id of the user
+ */
+id: string, 
+/**
+ * The email address of the user
+ */
+email: string, }>
   }
 }

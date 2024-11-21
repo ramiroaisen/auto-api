@@ -6,6 +6,9 @@ use ts_rs::TS;
 pub const DEFAULT_LIMIT: u64 = 200;
 pub const DEFAULT_SKIP: u64 = 0;
 
+/// # Page
+/// A page of items starting from `skip` and limited by `limit`
+/// with the total number of records present in `total`
 #[derive(Serialize, Deserialize, JsonSchema, TS)]
 pub struct Page<T> {
   #[garde(range(min = 0))]
@@ -60,6 +63,8 @@ const fn default_skip() -> u64 {
   DEFAULT_SKIP
 }
 
+/// # Pagination Limit
+/// How many records to return as maximum for the current query
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
 pub struct Limit(
   #[garde(range(min = 1, max = 200))]
@@ -74,6 +79,8 @@ impl Default for Limit {
 }
 
 
+/// # Pagination Skip
+/// How many records to skip for the current query
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
 pub struct Skip (
   #[garde(range(min = 0))]

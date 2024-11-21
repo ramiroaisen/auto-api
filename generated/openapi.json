@@ -18,46 +18,93 @@
   },
   "servers": [
     {
-      "url": "https://api.example.test/v1",
-      "description": "Production server"
+      "url": "/",
+      "description": "This server"
     }
   ],
   "paths": {
     "/users": {
       "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "skip",
+            "style": "deepObject",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "examples": [
+                0
+              ],
+              "title": "Pagination Skip",
+              "description": "How many records to skip for the current query",
+              "nullable": true
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "style": "deepObject",
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 1,
+              "examples": [
+                200
+              ],
+              "maximum": 200,
+              "title": "Pagination Limit",
+              "description": "How many records to return as maximum for the current query",
+              "nullable": true
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "A successful response",
             "content": {
               "application/json": {
                 "schema": {
+                  "title": "Page",
+                  "description": "A page of items starting from `skip` and limited by `limit`\n with the total number of records present in `total`",
                   "type": "object",
                   "properties": {
                     "skip": {
                       "type": "integer",
-                      "format": "uint",
+                      "format": "uint64",
                       "minimum": 0
                     },
                     "limit": {
                       "type": "integer",
-                      "format": "uint",
+                      "format": "uint64",
                       "minimum": 1
                     },
                     "total": {
                       "type": "integer",
-                      "format": "uint",
+                      "format": "uint64",
                       "minimum": 0
                     },
                     "items": {
                       "type": "array",
                       "items": {
+                        "title": "User",
+                        "description": "A user record",
                         "type": "object",
                         "properties": {
                           "id": {
+                            "description": "The unique id of the user",
                             "type": "string",
                             "pattern": "^[a-z0-9]+$"
                           },
                           "email": {
+                            "description": "The email address of the user",
                             "type": "string",
                             "format": "email",
                             "maxLength": 100
@@ -122,13 +169,17 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "title": "User",
+                  "description": "A user record",
                   "type": "object",
                   "properties": {
                     "id": {
+                      "description": "The unique id of the user",
                       "type": "string",
                       "pattern": "^[a-z0-9]+$"
                     },
                     "email": {
+                      "description": "The email address of the user",
                       "type": "string",
                       "format": "email",
                       "maxLength": 100

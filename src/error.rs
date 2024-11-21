@@ -30,6 +30,8 @@ pub enum ApiErrorKind {
   InvalidQueryParse,
   InvalidQueryValidate,
 
+  PayloadRead,
+  PayloadContentType,
   InvalidPayloadParse,
   InvalidPayloadValidate,
 }
