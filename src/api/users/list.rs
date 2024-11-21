@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use std::borrow::Cow;
-use crate::{api::shared::{Limit, Skip}, endpoint::{Endpoint, EndpointError, ParsedRequest}, util::dive_option};
+use crate::{api::shared::{Limit, Skip}, endpoint::{Endpoint, EndpointError, ParsedRequest}};
 
 use super::Item;
 use crate::api::shared::Page;
@@ -13,9 +13,9 @@ pub struct E;
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
 pub struct Query {
-  #[garde(custom(dive_option))]
+  #[garde(dive)]
   skip: Option<Skip>,
-  #[garde(custom(dive_option))]
+  #[garde(dive)]
   limit: Option<Limit>,
 }
 

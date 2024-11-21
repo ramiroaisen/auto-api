@@ -3,8 +3,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::util::dive_vec;
-
 #[derive(Serialize, Deserialize, JsonSchema, TS)]
 pub struct Page<T> {
   #[garde(range(min = 0))]
@@ -13,7 +11,7 @@ pub struct Page<T> {
   pub limit: usize,
   #[garde(range(min = 0))]
   pub total: usize,
-  #[garde(custom(dive_vec))]
+  #[garde(dive)]
   pub items: Vec<T>,
 }
 
@@ -45,7 +43,7 @@ struct PageValidate<'a, T: Validate<Context = ()>> {
   limit: usize,
   #[garde(range(min = 0))]
   total: usize,
-  #[garde(custom(dive_vec))]
+  #[garde(dive)]
   items: &'a Vec<T>,
 }
 
