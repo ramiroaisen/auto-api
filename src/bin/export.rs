@@ -2,7 +2,7 @@ use std::path::Path;
 
 #[tokio::main]
 async fn main() {
-  let registry = auto_api::api::get_registry();
+  let registry = auto_api::api::registry();
 
   let openapi_spec = registry.openapi_spec();
   let openapi_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("generated/openapi.json");

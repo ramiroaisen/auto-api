@@ -2,10 +2,12 @@ use core::panic;
 use std::{convert::Infallible, sync::Arc};
 use axum::{async_trait, extract::Request, http::Method, response::Response, routing::MethodFilter};
 use indexmap::IndexMap;
-use schemars::{generate::SchemaSettings, JsonSchema, Schema as SchemarsSchema};
+use schemars::{generate::SchemaSettings, Schema as SchemarsSchema};
 use serde_json::json;
 
-use crate::{error::ApiErrorPayload, ts, Endpoint, Schema};
+use crate::ts;
+use crate::endpoint::Endpoint;
+use crate::schema::Schema;
 
 #[async_trait]
 pub trait RegistryHandler: Send + Sync + 'static {
@@ -58,13 +60,26 @@ pub struct RegistryItem {
 #[derive(Clone, Default)]
 pub struct Registry {
   // { key: Path => { key: Method => Item }
+  error_payload_schema: schemars::Schema,
+  error_payload_ts: String,
   pub map: IndexMap<String, IndexMap<Method, RegistryItem>>,
 }
 
 
 impl Registry {
-  pub fn new() -> Self {
+  pub fn new<ErrorPayload: Schema>() -> Self {
+    let mut error_payload_settings = SchemaSettings::openapi3()
+      .for_serialize();
+    error_payload_settings.inline_subschemas = true;
+    error_payload_settings.option_nullable = true;
+    error_payload_settings.option_add_null_type = true;
+
+    let error_payload_schema = ErrorPayload::json_schema(&mut error_payload_settings.into_generator());
+    let error_payload_ts = ts::inline::<ErrorPayload>();
+
     Self {
+      error_payload_schema,
+      error_payload_ts,
       map: IndexMap::new(),
     }
   }
@@ -204,7 +219,7 @@ export type Endpoint<
   $output?: Output
 };"#);
 
-    def.push_str(&format!("\n\nexport type ErrorPayload = {}", ts::inline::<ApiErrorPayload>()));
+    def.push_str(&format!("\n\nexport type ErrorPayload = {}", self.error_payload_ts));
 
     def.push_str("\n\nexport type Api = {");
     
@@ -231,16 +246,9 @@ export type Endpoint<
 
   }
   pub fn openapi_spec(&self) -> serde_json::Value {
-    
-    let mut error_payload_settings = SchemaSettings::openapi3()
-      .for_serialize();
-    error_payload_settings.inline_subschemas = true;
-    error_payload_settings.option_nullable = true;
-    error_payload_settings.option_add_null_type = true;
-    let error_payload_schema = ApiErrorPayload::json_schema(&mut error_payload_settings.into_generator());
-    
+   
     let schemas = json!({
-      "ErrorPayload": error_payload_schema,
+      "ErrorPayload": self.error_payload_schema,
     });
     
     let mut paths = json!({});
@@ -412,6 +420,8 @@ export type Endpoint<
       }
     })
   }
+
+
   pub fn axum_router(&self) -> axum::Router {
     let mut router = axum::Router::<()>::new();
     for (path, methods_map) in &self.map {

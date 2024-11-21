@@ -4,7 +4,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS, thiserror::Error)]
+#[error("ApiError: status = {status}, kind = {kind:?}, message = {message}")]
 pub struct ApiError {
   #[garde(range(min = 400, max = 599))]
   pub status: u16,

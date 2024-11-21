@@ -2,7 +2,7 @@ use axum::{response::Html, routing::get, Json};
 
 #[tokio::main]
 async fn main() {
-  let registry = auto_api::api::get_registry();
+  let registry = auto_api::api::registry();
 
   let openapi = registry.openapi_spec();
   let api = registry.axum_router();
