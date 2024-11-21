@@ -9,6 +9,7 @@ use axum::{
 use tokio_stream::StreamExt;
 
 use crate::schema::Schema;
+use crate::void::Void;
 use crate::error::{ApiError, ApiErrorKind, IntoApiError};
 
 pub struct ParsedRequest<Context, Params, Query, Payload> {
