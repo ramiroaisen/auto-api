@@ -6,6 +6,7 @@ use indexmap::IndexMap;
 use schemars::{generate::SchemaSettings, Schema as SchemarsSchema};
 use serde_json::json;
 
+use crate::response::to_response;
 use crate::ts;
 use crate::endpoint::Endpoint;
 use crate::schema::Schema;
@@ -34,7 +35,7 @@ impl<
 > RegistryHandler for RegistryHandlerItem<T> {
 
   async fn handle(&self, req: Request) -> Response {
-    self.0.handle(req).await
+    to_response(self.0.handle(req).await)
   }
 }
 

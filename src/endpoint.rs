@@ -2,9 +2,9 @@ use std::borrow::Cow;
 use bytes::BytesMut;
 use garde::Validate;
 use axum::{
-  async_trait, body::{Body, Bytes}, extract::{FromRequest, FromRequestParts, Path, Request}, http::{
-    header::CONTENT_TYPE, request::Parts, HeaderValue, Method, StatusCode
-  }, response::{IntoResponse, Response}, Json
+  async_trait, body::{Body, Bytes}, extract::{FromRequestParts, Path, Request}, http::{
+    header::CONTENT_TYPE, request::Parts, Method, StatusCode
+  }
 };
 use tokio_stream::StreamExt;
 
@@ -49,13 +49,13 @@ pub trait Endpoint: Send + Sync + 'static {
     >
   ) -> Result<Self::Output, Box<dyn EndpointError>>;
 
-  async fn handle(&self, req: Request) -> Response {
+  async fn handle(&self, req: Request) -> Result<Self::Output, ApiError> {
     let (mut parts, body) = req.into_parts();
 
     let ctx = match self.ctx(&mut parts).await {
       Ok(ctx) => ctx,
       Err(err) => {
-        return err.into_api_error().into_response()
+        return Err(err.into_api_error())
       }
     };
 
@@ -65,22 +65,22 @@ pub trait Endpoint: Send + Sync + 'static {
       let params = match Path::<Self::Params>::from_request_parts(&mut parts, &()).await {
         Ok(Path(params)) => params,
         Err(err) => {
-          return ApiError {
+          return Err(ApiError {
             status: StatusCode::BAD_REQUEST.as_u16(),
             kind: ApiErrorKind::InvalidParamsParse,
             message: format!("error parsing path parameters: {err}"),
-          }.into_response()
+          })
         }
       };
 
       match params.validate() {
         Ok(()) => {},
         Err(report) => {
-          return ApiError {
+          return Err(ApiError {
             status: StatusCode::BAD_REQUEST.as_u16(),
             kind: ApiErrorKind::InvalidParamsValidate,
             message: format!("error validating path parameters: {report}"),
-          }.into_response()
+          })
         }
       }
 
@@ -108,22 +108,22 @@ pub trait Endpoint: Send + Sync + 'static {
       let query = match serde_qs::from_str::<Self::Query>(parts.uri.query().unwrap_or("")) {
         Ok(query) => query,
         Err(err) => {
-          return ApiError {
+          return Err(ApiError {
             status: StatusCode::BAD_REQUEST.as_u16(),
             kind: ApiErrorKind::InvalidQueryParse,
             message: format!("error parsing query parameters: {err}"),
-          }.into_response()
+          })
         }
       };
 
       match query.validate() {
         Ok(()) => {},
         Err(report) => {
-          return ApiError {
+          return Err(ApiError {
             status: StatusCode::BAD_REQUEST.as_u16(),
             kind: ApiErrorKind::InvalidQueryValidate,
             message: format!("error validating query parameters: {report}"),
-          }.into_response()
+          })
         }
       }
 
@@ -149,40 +149,34 @@ pub trait Endpoint: Send + Sync + 'static {
       // };
 
       if !is_content_type_json(&parts) {
-        return ApiError {
+        return Err(ApiError {
           status: StatusCode::BAD_REQUEST.as_u16(),
           kind: ApiErrorKind::PayloadContentType,
           message: String::from("content-type of request must be application/json"),
-        }
-        .into_response()
+        })
       }
 
-      let buf = match read_body(self.max_payload_size(), body).await {
-        Ok(buf) => buf,
-        Err(err) => {
-          return ApiError::from(err).into_response()
-        }
-      };
+      let buf = read_body(self.max_payload_size(), body).await?;
 
       let payload = match serde_json::from_slice::<Self::Payload>(&buf) {
         Ok(payload) => payload,
         Err(err) => {
-          return ApiError {
+          return Err(ApiError {
             status: StatusCode::BAD_REQUEST.as_u16(),
             kind: ApiErrorKind::InvalidPayloadParse,
             message: format!("error parsing payload: {err}"),
-          }.into_response()
+          })
         }
       };
 
       match payload.validate() {
         Ok(()) => {},
         Err(report) => {
-          return ApiError {
+          return Err(ApiError {
             status: StatusCode::BAD_REQUEST.as_u16(),
             kind: ApiErrorKind::InvalidPayloadValidate,
             message: format!("error validating payload: {report}"),
-          }.into_response()
+          })
         }
       }
       
@@ -197,26 +191,13 @@ pub trait Endpoint: Send + Sync + 'static {
     };
 
     let out = match self.run(parsed).await {
-      Ok(res) => res,
+      Ok(out) => out,
       Err(err) => {
-        return err.into_api_error().into_response()
-      }
-    };
-
-    let body = match serde_json::to_vec(&out) {
-      Ok(body) => body,
-      Err(_err) => {
-        return ApiError {
-          status: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-          kind: ApiErrorKind::Internal,
-          message: String::from("error serializing response"),
-        }.into_response()
+        return Err(err.into_api_error())
       }
     };
     
-    let mut res = Response::new(body.into());
-    res.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-    res
+    Ok(out)
   } 
 }
 
