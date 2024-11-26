@@ -1,22 +1,26 @@
 use axum::{http::{header::CONTENT_TYPE, HeaderValue}, response::{IntoResponse, Response}};
 use garde::Validate;
+use normalize::Normalize;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
+use shape::Shape;
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS, thiserror::Error)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Validate, Shape, Normalize, thiserror::Error)]
 #[error("ApiError: status = {status}, kind = {kind:?}, message = {message}")]
 pub struct ApiError {
+  #[normalize(skip)]
   #[garde(range(min = 400, max = 599))]
   pub status: u16,
-  #[serde(flatten)]
+  #[normalize(skip)]
   #[garde(skip)]
+  #[serde(flatten)]
   pub kind: ApiErrorKind,
+  #[normalize(trim)]
   #[garde(skip)]
   pub message: String
 }
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema, TS)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Shape)]
 #[serde(tag = "kind", content = "meta", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ApiErrorKind {
   Internal,
@@ -41,18 +45,18 @@ pub trait IntoApiError {
   fn into_api_error(self: Box<Self>) -> ApiError;
 }
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, Shape, Normalize)]
 pub struct ApiErrorPayload {
-  #[garde(skip)]
+  #[normalize(dive)]
+  #[garde(dive)]
   pub error: ApiError,
 }
 
 impl IntoResponse for ApiError {
   fn into_response(self) -> Response {
     let status = self.status;
-    let payload = ApiErrorPayload {
-      error: self,
-    };
+    let mut payload = ApiErrorPayload { error: self };
+    payload.normalize();
     let body = serde_json::to_vec(&payload).expect("error serializing api error");
     let mut res = Response::new(body.into());
     *res.status_mut() = status.try_into().expect("invalid status code in api error");

@@ -6,6 +6,7 @@ use axum::{
     header::CONTENT_TYPE, request::Parts, Method, StatusCode
   }
 };
+use normalize::Normalize;
 use tokio_stream::StreamExt;
 
 use crate::schema::Schema;
@@ -63,7 +64,7 @@ pub trait Endpoint: Send + Sync + 'static {
     let params = match Self::Params::void() {
       Some(void) => void,
       None => {
-        let params = match Path::<Self::Params>::from_request_parts(&mut parts, &()).await {
+        let mut params = match Path::<Self::Params>::from_request_parts(&mut parts, &()).await {
           Ok(Path(params)) => params,
           Err(err) => {
             return Err(ApiError {
@@ -74,6 +75,7 @@ pub trait Endpoint: Send + Sync + 'static {
           }
         };
 
+        params.normalize();
         match params.validate() {
           Ok(()) => {},
           Err(report) => {
@@ -107,7 +109,7 @@ pub trait Endpoint: Send + Sync + 'static {
         // };
 
         // serde_qs
-        let query = match serde_qs::from_str::<Self::Query>(parts.uri.query().unwrap_or("")) {
+        let mut query = match serde_qs::from_str::<Self::Query>(parts.uri.query().unwrap_or("")) {
           Ok(query) => query,
           Err(err) => {
             return Err(ApiError {
@@ -118,6 +120,7 @@ pub trait Endpoint: Send + Sync + 'static {
           }
         };
 
+        query.normalize();
         match query.validate() {
           Ok(()) => {},
           Err(report) => {
@@ -160,7 +163,7 @@ pub trait Endpoint: Send + Sync + 'static {
 
         let buf = read_body(self.max_payload_size(), body).await?;
 
-        let payload = match serde_json::from_slice::<Self::Payload>(&buf) {
+        let mut payload = match serde_json::from_slice::<Self::Payload>(&buf) {
           Ok(payload) => payload,
           Err(err) => {
             return Err(ApiError {
@@ -171,6 +174,7 @@ pub trait Endpoint: Send + Sync + 'static {
           }
         };
 
+        payload.normalize();
         match payload.validate() {
           Ok(()) => {},
           Err(report) => {
@@ -193,13 +197,16 @@ pub trait Endpoint: Send + Sync + 'static {
       payload,
     };
 
-    let out = match self.run(parsed).await {
+    let mut out = match self.run(parsed).await {
       Ok(out) => out,
       Err(err) => {
         return Err(err.into_api_error())
       }
     };
     
+    // we do not garde(validate) the output but we DO normalize it
+    out.normalize();
+
     Ok(out)
   } 
 }

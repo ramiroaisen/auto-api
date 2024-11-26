@@ -1,8 +1,9 @@
 use axum::{async_trait, http::{request::Parts, Method}};
 use garde::Validate;
+use normalize::Normalize;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
+use shape::Shape;
 use std::borrow::Cow;
 use crate::{api::shared::{Limit, Skip}, endpoint::{Endpoint, EndpointError, ParsedRequest}};
 
@@ -11,10 +12,12 @@ use crate::api::shared::Page;
 
 pub struct E;
 
-#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, Shape, Normalize)]
 pub struct Query {
+  #[normalize(skip)]
   #[garde(dive)]
   skip: Option<Skip>,
+  #[normalize(dive)]
   #[garde(dive)]
   limit: Option<Limit>,
 }

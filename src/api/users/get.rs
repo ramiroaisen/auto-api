@@ -1,18 +1,20 @@
 
 use std::borrow::Cow;
 use axum::{async_trait, http::{request::Parts, Method}};
-use crate::endpoint::{Endpoint, EndpointError, ParsedRequest};
+use normalize::Normalize;
+use shape::Shape;
 use garde::Validate;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
+use crate::endpoint::{Endpoint, EndpointError, ParsedRequest};
 use super::User;
 
 pub struct E;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, Validate, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema, Validate, Shape, Normalize)]
 pub struct Params {
+  #[normalize(skip)]
   #[garde(pattern("^[a-z0-9]+$"))]
   id: String
 }

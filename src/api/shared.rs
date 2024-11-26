@@ -1,7 +1,8 @@
 use garde::{Path, Report, Validate};
+use normalize::Normalize;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
+use shape::Shape;
 
 pub const DEFAULT_LIMIT: u64 = 200;
 pub const DEFAULT_SKIP: u64 = 0;
@@ -9,14 +10,19 @@ pub const DEFAULT_SKIP: u64 = 0;
 /// # Page
 /// A page of items starting from `skip` and limited by `limit`
 /// with the total number of records present in `total`
-#[derive(Serialize, Deserialize, JsonSchema, TS)]
+#[derive(Serialize, Deserialize, JsonSchema, Shape, Normalize)]
+#[normalize(bound = "T: Normalize")]
 pub struct Page<T> {
+  #[normalize(skip)]
   #[garde(range(min = 0))]
   pub skip: u64,
+  #[normalize(skip)]
   #[garde(range(min = 1))]
   pub limit: u64,
+  #[normalize(skip)]
   #[garde(range(min = 0))]
   pub total: u64,
+  #[normalize(dive)]
   #[garde(dive)]
   pub items: Vec<T>,
 }
@@ -65,8 +71,9 @@ const fn default_skip() -> u64 {
 
 /// # Pagination Limit
 /// How many records to return as maximum for the current query
-#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, Shape, Normalize)]
 pub struct Limit(
+  #[normalize(skip)]
   #[garde(range(min = 1, max = 200))]
   #[schemars(default = "default_limit", example = "default_limit")]
   pub u64
@@ -81,8 +88,9 @@ impl Default for Limit {
 
 /// # Pagination Skip
 /// How many records to skip for the current query
-#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, TS)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema, Validate, Shape, Normalize)]
 pub struct Skip (
+  #[normalize(skip)]
   #[garde(range(min = 0))]
   #[schemars(default = "default_skip", example = "default_skip")]
   pub u64
