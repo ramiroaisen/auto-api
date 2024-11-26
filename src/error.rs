@@ -11,7 +11,7 @@ pub struct ApiError {
   #[normalize(skip)]
   #[garde(range(min = 400, max = 599))]
   pub status: u16,
-  #[normalize(skip)]
+  #[normalize(dive)]
   #[garde(skip)]
   #[serde(flatten)]
   pub kind: ApiErrorKind,
@@ -20,7 +20,7 @@ pub struct ApiError {
   pub message: String
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Shape)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema, Shape, Normalize)]
 #[serde(tag = "kind", content = "meta", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ApiErrorKind {
   Internal,
